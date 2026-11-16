@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  veo3-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: veo3_studio
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - APP_PASSWORD=${APP_PASSWORD}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - DATABASE_URL=file:/app/prisma/dev.db
+      - STORAGE_DIR=/app/storage
+      - PORT=3000
+    volumes:
+      - ./storage:/app/storage
+      - ./prisma:/app/prisma

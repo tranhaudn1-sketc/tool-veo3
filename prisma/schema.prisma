@@ -1,0 +1,66 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Generation {
+  id             String     @id @default(cuid())
+  type           String     // "image" | "video"
+  mode           String     // "t2i" | "i2i" | "t2v" | "i2v"
+  prompt         String
+  negativePrompt String?
+  model          String
+  params         String     // JSON encoded parameters
+  status         String     @default("queued") // "queued" | "processing" | "completed" | "failed" | "cancelled"
+  errorMessage   String?
+  costEstimate   Float      @default(0)
+  isFavorite     Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+  completedAt    DateTime?
+  
+  assets         Asset[]
+  usageLogs      UsageLog[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([type])
+  @@index([isFavorite])
+}
+
+model Asset {
+  id            String     @id @default(cuid())
+  generationId  String
+  generation    Generation @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  filePath      String     // relative or key path in storage
+  thumbnailPath String?    // relative or key path to thumbnail
+  mimeType      String
+  width         Int?
+  height        Int?
+  durationSec   Float?
+  sizeBytes     Int?
+  createdAt     DateTime   @default(now())
+
+  @@index([generationId])
+}
+
+model UsageLog {
+  id           String      @id @default(cuid())
+  date         String      // YYYY-MM-DD format for aggregation
+  generationId String?
+  generation   Generation? @relation(fields: [generationId], references: [id], onDelete: SetNull)
+  cost         Float
+  createdAt    DateTime    @default(now())
+
+  @@index([date])
+  @@index([generationId])
+}
+
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
